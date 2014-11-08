@@ -55,7 +55,7 @@ void Excep_ICU_SWINT(void){ }
 // CMTU0_CMT0
 void Excep_CMT0_CMI0(void)
 {
-	IntCMT0();
+//	LightSensor_IntCMT0();
 }
 
 // CMTU1_CMT1
@@ -107,13 +107,7 @@ void Excep_RSPI0_SPTI0(void)
 }
 
 // RSPI0 SPII0
-void Excep_RSPI0_SPII0(void)
-{
-//	MPU6500_Int_SPRI0();
-	RSPI0.SPCR.BIT.SPE = 0;
-	RSPI0.SPCR2.BIT.SPIIE = 0;
-	Printf("Idle\n");
-}
+void Excep_RSPI0_SPII0(void){ }
 
 // RSPI1 SPRI1
 void Excep_RSPI1_SPRI1(void){ }
@@ -478,7 +472,10 @@ void Excep_RIIC3_TXI0(void){ }
 void Excep_RIIC3_TEI0(void){ }
 
 // DMACA DMAC0
-void Excep_DMACA_DMAC0(void){ }
+void Excep_DMACA_DMAC0(void)
+{
+	LightSensor_IntDMAC0();
+}
 
 // DMAC DMAC1
 void Excep_DMACA_DMAC1(void){ }

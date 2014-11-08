@@ -6,15 +6,15 @@
 #ifndef __RING_BUFFER_H__
 #define __RING_BUFFER_H__
 /*----------------------------------------------------------------------
-	インクルード
+	Includes
  ----------------------------------------------------------------------*/
 #include <stdbool.h>
 #include "../typedefine.h"
 
 /*----------------------------------------------------------------------
-	構造体の定義
+	Typedef Definitions
  ----------------------------------------------------------------------*/
-/** リングバッファの機能を提供する構造体
+/** リングバッファの機能を提供するクラスっぽい構造体
  */
 typedef volatile struct stRingbuffer
 {
@@ -33,40 +33,12 @@ typedef volatile struct stRingbuffer
 }RING_BUFFER;
 
 /*----------------------------------------------------------------------
-	パブリックメソッド
+	Public Method Declarations
  ----------------------------------------------------------------------*/
 /** リングバッファのインスタンスを生成する
  * @param size : 生成するリングバッファのバッファサイズ
  * @retval RING_BUFFER* : 生成したリングバッファのインスタンス
  */
 RING_BUFFER* NewRingBuffer(_UWORD size);
-
-/*----------------------------------------------------------------------
-	プライベートメソッド
- ----------------------------------------------------------------------*/
-/** リングバッファに割り当てたメモリの解放を行う
- * @param rb : 処理を行うリングバッファ構造体のポインタ
- * @retval void
- */
-void RingBuffer_Dispose(RING_BUFFER* rb);
-
-/** リングバッファにデータを追加する
- * @param rb : 対象リングバッファ構造体のポインタ
- * @param data: 追加するデータ(1byte)
- * @retval 成功したらtrueを返す
- */
-bool RingBuffer_Add(RING_BUFFER* rb, _UBYTE data);
-
-/** リングバッファからデータを取り出す
- * @param rb : 対象リングバッファ構造体のポインタ
- * @retval 取り出されたデータ
- */
-_UBYTE RingBuffer_Pull(RING_BUFFER* rb);
-
-/** リングバッファ内のデータを全消去する
- * @param rb : 対象リングバッファ構造体のポインタ
- * @retval void
- */
-void RingBuffer_Flash(RING_BUFFER* rb);
 
 #endif

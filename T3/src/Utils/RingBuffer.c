@@ -4,13 +4,21 @@
  */
 
 /*----------------------------------------------------------------------
-	インクルード
+	Includes
  ----------------------------------------------------------------------*/
 #include "RingBuffer.h"
 #include "stdlib.h"
 
 /*----------------------------------------------------------------------
-	パブリックメソッド
+	Private Method Declarations
+ ----------------------------------------------------------------------*/
+static void RingBuffer_Dispose(RING_BUFFER* rb);
+static bool RingBuffer_Add(RING_BUFFER* rb, _UBYTE data);
+static _UBYTE RingBuffer_Pull(RING_BUFFER* rb);
+static void RingBuffer_Flash(RING_BUFFER* rb);
+
+/*----------------------------------------------------------------------
+	Public Method Definitions
  ----------------------------------------------------------------------*/
 /** リングバッファのインスタンスを生成する
  * @param size : 生成するリングバッファのバッファサイズ
@@ -41,13 +49,13 @@ RING_BUFFER* NewRingBuffer(_UWORD size)
 }
 
 /*----------------------------------------------------------------------
-	プライベートメソッド
+	Private Method Definitions
  ----------------------------------------------------------------------*/
 /** リングバッファに割り当てたメモリの解放を行う
  * @param rb : 処理を行うリングバッファ構造体のポインタ
  * @retval void
  */
-void RingBuffer_Dispose(RING_BUFFER* rb)
+static void RingBuffer_Dispose(RING_BUFFER* rb)
 {
 	free(rb->buff);
 }
@@ -56,7 +64,7 @@ void RingBuffer_Dispose(RING_BUFFER* rb)
  * @param data: 追加するデータ(1byte)
  * @retval 成功したらtrueを返す
  */
-bool RingBuffer_Add(RING_BUFFER* rb, _UBYTE data)
+static bool RingBuffer_Add(RING_BUFFER* rb, _UBYTE data)
 {
 	// バッファフルでなければデータを追加
 	if(rb->remain < rb->size)
@@ -84,7 +92,7 @@ bool RingBuffer_Add(RING_BUFFER* rb, _UBYTE data)
  * @param void
  * @retval 取り出されたデータ
  */
-_UBYTE RingBuffer_Pull(RING_BUFFER* rb)
+static _UBYTE RingBuffer_Pull(RING_BUFFER* rb)
 {
 	_UBYTE data = 0x00;
 
@@ -109,7 +117,7 @@ _UBYTE RingBuffer_Pull(RING_BUFFER* rb)
  * @param void
  * @retval void
  */
-void RingBuffer_Flash(RING_BUFFER* rb)
+static void RingBuffer_Flash(RING_BUFFER* rb)
 {
 	rb->read = 0;
 	rb->write = 0;
