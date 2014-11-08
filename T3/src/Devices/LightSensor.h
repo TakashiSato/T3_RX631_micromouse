@@ -13,13 +13,10 @@
 /*----------------------------------------------------------------------
 	Macro Definitions
  ----------------------------------------------------------------------*/
-#define IRLED0	PORTA.PODR.BIT.B1
-#define IRLED1	PORTA.PODR.BIT.B3
-#define IRLED2	PORTA.PODR.BIT.B4
-#define IRLED3	PORTA.PODR.BIT.B6
-
-#define IRLED_ON	1
-#define IRLED_OFF	0
+#define IR_LED0	PORTA.PODR.BIT.B1
+#define IR_LED1	PORTA.PODR.BIT.B3
+#define IR_LED2	PORTA.PODR.BIT.B4
+#define IR_LED3	PORTA.PODR.BIT.B6
 
 // 赤外LEDを発光させてからフォトトランジスタ電圧のA/D変換を開始するまでの遅れ時間
 //   600: 50[usec]
@@ -29,10 +26,20 @@
 #define GET_INTERVAL	2400
 
 /*----------------------------------------------------------------------
+	Enum Definitions
+ ----------------------------------------------------------------------*/
+// IR LEDオン/オフ状態
+typedef enum eIrLedState
+{
+	IR_LED_ON = 1,
+	IR_LED_OFF = 0
+}E_IR_LED_STATE;
+
+/*----------------------------------------------------------------------
 	Public Method Declarations
  ----------------------------------------------------------------------*/
 void LightSensor_Initialize(void);
 void LightSensor_IntDMAC0(void);
-_UWORD LightSensor_GetADValue(void);
+_SWORD LightSensor_GetADValue(_UBYTE ch);
 
 #endif

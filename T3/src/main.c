@@ -143,9 +143,12 @@ void main(void)
 //
 //		PORT3.PODR.BIT.B1 = 1;
 
-		// LightSensor
-		AD128160_Locate(3, 0);
-		Printf("AD:%4d\n", LightSensor_GetADValue());
+		// LightSensor用
+//		AD128160_Locate(3, 0);
+//		Printf("AD0:%5d\n", LightSensor_GetADValue(0));
+//		Printf("AD1:%5d\n", LightSensor_GetADValue(1));
+//		Printf("AD2:%5d\n", LightSensor_GetADValue(2));
+//		Printf("AD3:%5d\n", LightSensor_GetADValue(3));
 
 		WaitMS(50);
 	}

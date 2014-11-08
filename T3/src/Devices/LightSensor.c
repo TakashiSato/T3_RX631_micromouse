@@ -14,10 +14,10 @@
 /*----------------------------------------------------------------------
 	Private global variables
  ----------------------------------------------------------------------*/
-static _UWORD _adVal;
 static _UBYTE _tp = 0;	// タスクポインタ
-static _UWORD _senseVal[4];
-static _UWORD _adTemp;
+static _UBYTE _sensorCh = 0;	// 処理対象センサチャンネル
+static _UWORD _ledOffAdVal[4];	// フィルタ用LEDオフ時A/D値格納
+static _UWORD _ledOnAdVal[4];	// フィルタ用LEDオン時A/D値格納
 
 /*----------------------------------------------------------------------
 	Private Method Declarations
@@ -26,6 +26,7 @@ static void LightSensor_InitializePort(void);
 static void LightSensor_InitializeADC(void);
 static void LightSensor_InitializeDMAC(void);
 static void LightSensor_InitializeMTU3(void);
+static void LightSensor_SetLedState(_UBYTE ch, E_IR_LED_STATE state);
 
 /*----------------------------------------------------------------------
 	Public Method Definitions
@@ -56,13 +57,43 @@ void LightSensor_IntDMAC0(void)
 	switch(_tp)
 	{
 	case 0:
-		_adTemp = _adVal;		// LEDオフ時AD値の格納
-		IRLED0 = IRLED_ON;		// IRLED点灯
-		MTU3.TGRA = PT_DELAY;	// LEDを発光させて少ししてからA/D変換を開始させる
+	case 2:
+	case 4:
+	case 6:
+		LightSensor_SetLedState(_sensorCh, IR_LED_ON);	// IRLED点灯
+		DMAC0.DMDAR = (void*)&(_ledOnAdVal[_sensorCh]);	// DMAC転送先アドレス設定
+		MTU3.TGRA = PT_DELAY;							// LEDを発光させて少ししてからA/D変換を開始させる
 		break;
 	case 1:
-		_senseVal[0] = _adVal - _adTemp;
-		IRLED0 = IRLED_OFF;		// IRLED消灯
+		LightSensor_SetLedState(_sensorCh, IR_LED_OFF);	// IRLED消灯
+		S12AD.ADANS0.WORD = 0x0002;						// AN001を変換対象とする
+		DMAC0.DMSAR = (void*)&S12AD.ADDR1;				// DMAC転送元アドレス設定:AN001
+		_sensorCh = 1;
+		DMAC0.DMDAR = (void*)&(_ledOffAdVal[_sensorCh]);// DMAC転送先アドレス設定
+		MTU3.TGRA = GET_INTERVAL;
+		break;
+	case 3:
+		LightSensor_SetLedState(_sensorCh, IR_LED_OFF);	// IRLED消灯
+		S12AD.ADANS0.WORD = 0x0004;						// AN002を変換対象とする
+		DMAC0.DMSAR = (void*)&S12AD.ADDR2;				// DMAC転送元アドレス設定:AN002
+		_sensorCh = 2;
+		DMAC0.DMDAR = (void*)&(_ledOffAdVal[_sensorCh]);// DMAC転送先アドレス設定
+		MTU3.TGRA = GET_INTERVAL;
+		break;
+	case 5:
+		LightSensor_SetLedState(_sensorCh, IR_LED_OFF);	// IRLED消灯
+		S12AD.ADANS0.WORD = 0x0040;						// AN006を変換対象とする
+		DMAC0.DMSAR = (void*)&S12AD.ADDR6;				// DMAC転送元アドレス設定:AN006
+		_sensorCh = 3;
+		DMAC0.DMDAR = (void*)&(_ledOffAdVal[_sensorCh]);// DMAC転送先アドレス設定
+		MTU3.TGRA = GET_INTERVAL;
+		break;
+	case 7:
+		LightSensor_SetLedState(_sensorCh, IR_LED_OFF);	// IRLED消灯
+		S12AD.ADANS0.WORD = 0x0001;						// AN000を変換対象とする
+		DMAC0.DMSAR = (void*)&S12AD.ADDR0;				// DMAC転送元アドレス設定:AN000
+		_sensorCh = 0;
+		DMAC0.DMDAR = (void*)&(_ledOffAdVal[_sensorCh]);// DMAC転送先アドレス設定
 		MTU3.TGRA = GET_INTERVAL;
 		break;
 	default:
@@ -71,7 +102,7 @@ void LightSensor_IntDMAC0(void)
 
 	// タスクポインタを進める
 	_tp++;
-	if (_tp >= 2)
+	if (_tp >= 8)
 	{
 		_tp = 0;
 	}
@@ -85,12 +116,12 @@ void LightSensor_IntDMAC0(void)
 }
 
 /** AD値取得
- * @param void
- * @retval _UWORD: AD値
+ * @param ch: 取得するチャンネル
+ * @retval _SWORD: AD値
  */
-_UWORD LightSensor_GetADValue(void)
+_SWORD LightSensor_GetADValue(_UBYTE ch)
 {
-	return _senseVal[0];
+	return (_SWORD)(_ledOnAdVal[ch]) - _ledOffAdVal[ch];
 }
 
 /*----------------------------------------------------------------------
@@ -147,7 +178,7 @@ static void LightSensor_InitializeADC(void)
 	// ADCの設定
 	S12AD.ADCSR.BIT.EXTRG = 0;	// 同期トリガによるA/D変換の開始を選択
 	S12AD.ADCSR.BIT.TRGE = 1;	// 同期，非同期トリガによるA/D変換の開始を許可
-	S12AD.ADCSR.BIT.CKS = 0;	// A/D変換クロック(0:PCLK/8)
+	S12AD.ADCSR.BIT.CKS = 3;	// A/D変換クロック(3:PCLK)
 	S12AD.ADCSR.BIT.ADIE = 1;	// スキャン終了後の割り込み許可
 	S12AD.ADCSR.BIT.ADCS = 0;	// モード選択(0:シングル，1:連続)
 	S12AD.ADCER.BIT.ADRFMT = 0;	// ADDRレジスタのフォーマット:右づめ
@@ -181,7 +212,7 @@ static void LightSensor_InitializeDMAC(void)
 	DMAC0.DMAMD.WORD = 0x0000;			// 転送先・転送元アドレス固定
 	DMAC0.DMTMD.WORD = 0x2101;			// ノーマル転送,16ビット転送,周辺モジュール割り込みトリガ
 	DMAC0.DMSAR = (void*)&S12AD.ADDR0;	// 転送元アドレス設定
-	DMAC0.DMDAR = (void*)&_adVal;		// 転送先アドレス設定
+	DMAC0.DMDAR = (void*)&(_ledOffAdVal)[0];	// 転送先アドレス設定
 	DMAC0.DMCSL.BIT.DISEL = 0;			// 転送開始時に起動要因の割り込みフラグをクリア
 	DMAC0.DMCRA = 1;					// 転送回数:1
 
@@ -227,4 +258,30 @@ static void LightSensor_InitializeMTU3(void)
 
 	// カウント動作開始
 	MTU.TSTR.BIT.CST3 = 1;		// MTU3カウント動作開始
+}
+
+/** 赤外LED発光状態の設定
+ * @param ch: 設定するチャンネル
+ * @param state: 設定する状態
+ * @retval void
+ */
+static void LightSensor_SetLedState(_UBYTE ch, E_IR_LED_STATE state)
+{
+	switch(ch)
+	{
+	case 0:
+		IR_LED0 = state;
+		break;
+	case 1:
+		IR_LED1 = state;
+		break;
+	case 2:
+		IR_LED2 = state;
+		break;
+	case 3:
+		IR_LED3 = state;
+		break;
+	default:
+		break;
+	}
 }
