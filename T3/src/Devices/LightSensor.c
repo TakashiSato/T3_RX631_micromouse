@@ -8,8 +8,6 @@
 #include "LightSensor.h"
 #include "../iodefine.h"
 #include "../Global.h"
-#include "../Peripherals/Timer.h"
-#include "../Peripherals/SerialPort.h"
 
 /*----------------------------------------------------------------------
 	Private global variables
@@ -67,6 +65,7 @@ void LightSensor_IntDMAC0(void)
 	case 1:
 		LightSensor_SetLedState(_sensorCh, IR_LED_OFF);	// IRLED消灯
 		S12AD.ADANS0.WORD = 0x0002;						// AN001を変換対象とする
+		S12AD.ADADS0.BIT.ADS0 = 0x0002;					// AN001をA/D変換値加算に設定
 		DMAC0.DMSAR = (void*)&S12AD.ADDR1;				// DMAC転送元アドレス設定:AN001
 		_sensorCh = 1;
 		DMAC0.DMDAR = (void*)&(_ledOffAdVal[_sensorCh]);// DMAC転送先アドレス設定
@@ -75,6 +74,7 @@ void LightSensor_IntDMAC0(void)
 	case 3:
 		LightSensor_SetLedState(_sensorCh, IR_LED_OFF);	// IRLED消灯
 		S12AD.ADANS0.WORD = 0x0004;						// AN002を変換対象とする
+		S12AD.ADADS0.BIT.ADS0 = 0x0004;					// AN002をA/D変換値加算に設定
 		DMAC0.DMSAR = (void*)&S12AD.ADDR2;				// DMAC転送元アドレス設定:AN002
 		_sensorCh = 2;
 		DMAC0.DMDAR = (void*)&(_ledOffAdVal[_sensorCh]);// DMAC転送先アドレス設定
@@ -83,6 +83,7 @@ void LightSensor_IntDMAC0(void)
 	case 5:
 		LightSensor_SetLedState(_sensorCh, IR_LED_OFF);	// IRLED消灯
 		S12AD.ADANS0.WORD = 0x0040;						// AN006を変換対象とする
+		S12AD.ADADS0.BIT.ADS0 = 0x0040;					// AN006をA/D変換値加算に設定
 		DMAC0.DMSAR = (void*)&S12AD.ADDR6;				// DMAC転送元アドレス設定:AN006
 		_sensorCh = 3;
 		DMAC0.DMDAR = (void*)&(_ledOffAdVal[_sensorCh]);// DMAC転送先アドレス設定
@@ -91,6 +92,7 @@ void LightSensor_IntDMAC0(void)
 	case 7:
 		LightSensor_SetLedState(_sensorCh, IR_LED_OFF);	// IRLED消灯
 		S12AD.ADANS0.WORD = 0x0001;						// AN000を変換対象とする
+		S12AD.ADADS0.BIT.ADS0 = 0x0001;					// AN000をA/D変換値加算に設定
 		DMAC0.DMSAR = (void*)&S12AD.ADDR0;				// DMAC転送元アドレス設定:AN000
 		_sensorCh = 0;
 		DMAC0.DMDAR = (void*)&(_ledOffAdVal[_sensorCh]);// DMAC転送先アドレス設定
@@ -121,7 +123,8 @@ void LightSensor_IntDMAC0(void)
  */
 _SWORD LightSensor_GetADValue(_UBYTE ch)
 {
-	return (_SWORD)(_ledOnAdVal[ch]) - _ledOffAdVal[ch];
+//	return (_SWORD)(_ledOnAdVal[ch]) - _ledOffAdVal[ch];
+	return ((_SWORD)(_ledOnAdVal[ch] >> 2) - (_ledOffAdVal[ch] >> 2)) / ADC_SAMPLING_NUM;
 }
 
 /*----------------------------------------------------------------------
@@ -181,7 +184,9 @@ static void LightSensor_InitializeADC(void)
 	S12AD.ADCSR.BIT.CKS = 3;	// A/D変換クロック(3:PCLK)
 	S12AD.ADCSR.BIT.ADIE = 1;	// スキャン終了後の割り込み許可
 	S12AD.ADCSR.BIT.ADCS = 0;	// モード選択(0:シングル，1:連続)
-	S12AD.ADCER.BIT.ADRFMT = 0;	// ADDRレジスタのフォーマット:右づめ
+	S12AD.ADADC.BIT.ADC = ADC_SAMPLING_NUM-1;	// A/D変換値加算回数
+	S12AD.ADADS0.BIT.ADS0 = 0x0001;	// AN000をA/D変換値加算に設定
+//	S12AD.ADCER.BIT.ADRFMT = 0;	// ADDRレジスタのフォーマット:右づめ(変換値加算の場合左詰め)
 
 	// A/D変換開始トリガの選択
 	S12AD.ADSTRGR.BIT.ADSTRS = 3;	// MTUn.TGRAとMTUn.TCNTをトリガとする

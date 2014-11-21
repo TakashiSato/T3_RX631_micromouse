@@ -8,10 +8,7 @@
  ----------------------------------------------------------------------*/
 #include "DRV8836.h"
 #include "../iodefine.h"
-#include "../BoardDefine.h"
 #include "../Global.h"
-#include "../Peripherals/Timer.h"
-#include "../Devices/AD-128160-UART.h"
 
 /*----------------------------------------------------------------------
 	Private global variables
@@ -19,8 +16,8 @@
 static const _UINT PWM_FREQ = 1200;		// PWMの周期(1200:10kHz)
 static _UINT _motorA_duty = 0;			// モータAのDuty
 static _UINT _motorB_duty = 0;			// モータBのDuty
-static _UINT _motorA_dir = 0;			// モータAの回転方向
-static _UINT _motorB_dir = 0;			// モータBの回転方向
+static E_MOTOR_DIR _motorA_dir = MOTOR_DIR_CW;			// モータAの回転方向
+static E_MOTOR_DIR _motorB_dir = MOTOR_DIR_CW;			// モータBの回転方向
 
 /*----------------------------------------------------------------------
 	Private Method Declarations
@@ -42,12 +39,12 @@ void DRV8836_Initialize(void)
 	// モータドライバをスリープ状態に移行
 	DRV8836_SetSleep();
 	// MTU初期化
-//	DRV8836_InitializeMTU();
+	DRV8836_InitializeMTU();
 	// Duty設定
-//	DRV8836_DriveMotor(MOTOR_TYPE_LEFT, MOTOR_DIR_CW, 0);
-//	DRV8836_DriveMotor(MOTOR_TYPE_RIGHT, MOTOR_DIR_CW, 0);
+	DRV8836_DriveMotor(MOTOR_TYPE_LEFT, MOTOR_DIR_CW, 0);
+	DRV8836_DriveMotor(MOTOR_TYPE_RIGHT, MOTOR_DIR_CW, 0);
 	// Wait
-//	WaitMS(100);
+	WaitMS(100);
 	// モータドライバを動作状態に移行
 //	DRV8836_Wakeup();
 }

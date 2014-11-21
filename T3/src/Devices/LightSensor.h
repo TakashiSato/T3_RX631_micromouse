@@ -13,10 +13,10 @@
 /*----------------------------------------------------------------------
 	Macro Definitions
  ----------------------------------------------------------------------*/
-#define IR_LED0	PORTA.PODR.BIT.B1
-#define IR_LED1	PORTA.PODR.BIT.B3
-#define IR_LED2	PORTA.PODR.BIT.B4
-#define IR_LED3	PORTA.PODR.BIT.B6
+#define IR_LED0	PORTA.PODR.BIT.B6
+#define IR_LED1	PORTA.PODR.BIT.B4
+#define IR_LED2	PORTA.PODR.BIT.B3
+#define IR_LED3	PORTA.PODR.BIT.B1
 
 // 赤外LEDを発光させてからフォトトランジスタ電圧のA/D変換を開始するまでの遅れ時間
 //   600: 50[usec]
@@ -24,6 +24,9 @@
 // 一つのセンサに対するA/D値を取得してから次のA/D値を取得するまでの間隔
 //   2400: 200[usec]
 #define GET_INTERVAL	2400
+
+// 一つのA/Dチャンネルに対し指定した回数分A/D変換を行い,その加算値をA/D値として得る(1~4で指定)
+#define ADC_SAMPLING_NUM	4
 
 /*----------------------------------------------------------------------
 	Enum Definitions

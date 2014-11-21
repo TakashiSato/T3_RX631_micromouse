@@ -17,12 +17,12 @@
  * @param msec : 待つミリ秒
  * @retval void
  */
-void WaitMS(unsigned int msec);
+void Timer_WaitMS(_UINT msec);
 
 /** 指定マイクロ秒待つ
  * @param usec : 待つマイクロ秒
  * @retval void
  */
-void WaitUS(unsigned int usec);
+void Timer_WaitUS(_UINT usec);
 
 #endif

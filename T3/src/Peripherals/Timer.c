@@ -5,6 +5,7 @@
 /*----------------------------------------------------------------------
 	インクルード
  ----------------------------------------------------------------------*/
+#include "Timer.h"
 #include "../BoardDefine.h"
 
 /*----------------------------------------------------------------------
@@ -18,7 +19,7 @@
  * @param msec : 待つミリ秒
  * @retval void
  */
-void WaitMS(unsigned int msec)
+void Timer_WaitMS(_UINT msec)
 {
 	volatile unsigned long i, j;
 
@@ -34,7 +35,7 @@ void WaitMS(unsigned int msec)
  * @param usec : 待つマイクロ秒
  * @retval void
  */
-void WaitUS(unsigned int usec)
+void Timer_WaitUS(_UINT usec)
 {
 	volatile unsigned long i, j;
 

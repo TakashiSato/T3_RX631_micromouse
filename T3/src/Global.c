@@ -22,8 +22,14 @@
 	プログラム全体で使う関数の定義
  ----------------------------------------------------------------------*/
 #if SERIAL_TARGET_IS_CONSOLE == 1
-	void (*Printf)(char*, ...) = SCI_Printf;
-	void (*Scanf)(char* str, ...) = SCI_Scanf;
+	void (*Printf)(_UBYTE*, ...) = SCI_Printf;
+	void (*Scanf)(_UBYTE* str, ...) = SCI_Scanf;
 #else
-	void (*Printf)(char*, ...) = AD128160_Printf;
+	void (*Printf)(_UBYTE*, ...) = AD128160_Printf;
 #endif
+
+void (*WaitMS)(_UINT msec) = Timer_WaitMS;
+void (*WaitUS)(_UINT usec) = Timer_WaitUS;
+void (*DispLED)(_UBYTE lightPattern) = LED_Disp;
+void (*PlaySound)(_UINT freq) = Speaker_PlaySound;
+bool (*GetSwitchState)(void) = Switch_GetState;

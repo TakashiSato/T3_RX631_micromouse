@@ -286,7 +286,7 @@ static void RSPI0_Open(void)
 	RSPI0.SPCR.BIT.MSTR = 1;		// マスタモード
 	RSPI0.SPSCR.BYTE = 0;			// シーケンス制御無効
 
-	RSPI0_IRPrioritySet(2);
+	RSPI0_IRPrioritySet(10);
 	RSPI0_InterruptsEnable(false);
 	RSPI0_InterruptsClear();
 }

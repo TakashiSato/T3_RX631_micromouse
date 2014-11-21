@@ -148,7 +148,7 @@ void AD128160_PutLong(_SQWORD var, _SBYTE len);
 void AD128160_PutDouble(double var, _SBYTE len, _SBYTE fracLen);
 
 // ==== AD128160用Printf関数 ====
-void AD128160_Printf(char* str, ...);
+void AD128160_Printf(_UBYTE* str, ...);
 
 // ==== 整数表示特化関数 ====
 void AD128160_DisplasyNum(_UBYTE x, _UBYTE y, signed int num, unsigned char len, unsigned char type);

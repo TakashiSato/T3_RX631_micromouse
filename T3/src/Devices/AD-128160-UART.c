@@ -8,7 +8,7 @@
 ============================================================*/
 #include "AD-128160-UART.h"
 #include "../iodefine.h"
-#include "../Peripherals/Timer.h"
+#include "../Global.h"
 
 /*============================================================
 		関数の定義
@@ -684,10 +684,10 @@ void AD128160_PutDouble(double var, _SBYTE len, _SBYTE fracLen)
 /*------------------------------------------------------------
 		AD128160用Printf関数
 ------------------------------------------------------------*/
-void AD128160_Printf(char* str, ...)
+void AD128160_Printf(_UBYTE* str, ...)
 {
 	va_list args;
-	char *ptr;
+	_UBYTE *ptr;
 	_SBYTE len = 0;
 	_UBYTE fracLen = AD128160_FRAC_LENGTH;	// 小数点表示時の小数点以下桁数（デフォルトでは2）
 

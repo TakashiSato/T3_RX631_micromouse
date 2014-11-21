@@ -8,7 +8,7 @@
  ----------------------------------------------------------------------*/
 #include "MPU6500.h"
 #include "../iodefine.h"
-#include "../Peripherals/Timer.h"
+#include "../Global.h"
 #include "../Peripherals/RSPI.h"
 
 /*----------------------------------------------------------------------
