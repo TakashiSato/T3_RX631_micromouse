@@ -15,6 +15,9 @@
  ----------------------------------------------------------------------*/
 #define	RSPI_DUMMY_TXDATA		(0xFFFFFFFF)
 
+#define RSPI_CYCLE_INTERVAL		375	// Cycleモードの周期 375: 250[uSec]
+//#define RSPI_CYCLE_INTERVAL		1500	// Cycleモードの周期 1500: 1[mSec]
+
 /*----------------------------------------------------------------------
 	Typedef definitions
  ----------------------------------------------------------------------*/
@@ -47,10 +50,15 @@ typedef struct rspi_denpendence
 	Public Methods Declarations
  ----------------------------------------------------------------------*/
 void InitializeRSPI0(void);
-void Int_SPRI0(void);
+inline void Int_SPRI0(void);
+#pragma inline(Int_SPTI0)
 void Int_SPTI0(void);
+#pragma inline(Int_SPII0)
 void Int_SPII0(void);
+#pragma inline(Int_SPEI0)
 void Int_SPEI0(void);
+#pragma inline(RSPI0_IntCMT1)
+void RSPI0_IntCMT1(void);
 void RSPI0_Read(void *pdest, _UWORD length, RSPI_DEPENDENCE dep);
 void RSPI0_Write(void *psrc, _UWORD length, RSPI_DEPENDENCE dep);
 void RSPI0_WriteRead(void *psrc, void *pdest, _UWORD length, RSPI_DEPENDENCE dep);

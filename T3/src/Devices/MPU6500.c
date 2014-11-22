@@ -17,7 +17,8 @@
 static RSPI_DEPENDENCE dep;		// RSPIペリフェラル依存パラメータ
 static _UBYTE recv[4] = {0};	// SPI送信データ格納用
 static _UBYTE send[4] = {0};	// SPI送信データ格納用
-static _UBYTE angvel[3];		// 角速度情報格納用
+static _UBYTE cyclesend[4] = {0};	// SPI送信データ格納用(CycleOperation専用)
+static _UBYTE angvel[3] = {0};	// 角速度情報格納用
 
 /*----------------------------------------------------------------------
 	Private Method Declarations
@@ -89,6 +90,11 @@ static void InitializeGyro(void)
 	// 割り込み無効
 	MPU6500_RSPI_Write(MPUREG_INT_ENABLE, 0x00);
 	WaitMS(10);
+
+	// CycleOperation用コマンドの設定
+	cyclesend[0] = MPUREG_GYRO_ZOUT_H | MPU_READ_FLAG;
+	cyclesend[1] = 0x00;
+	cyclesend[2] = 0x00;
 }
 
 /** RSPI0の初期化
@@ -184,9 +190,9 @@ static _UBYTE MPU6500_RSPI_Read(_UBYTE registerAddress)
  */
 static void MPU6500_CycleSendCommand(void)
 {
-	send[0] = MPUREG_GYRO_ZOUT_H | MPU_READ_FLAG;
-	send[1] = 0x00;
-	send[2] = 0x00;
+//	send[0] = MPUREG_GYRO_ZOUT_H | MPU_READ_FLAG;
+//	send[1] = 0x00;
+//	send[2] = 0x00;
 
-	RSPI0_WriteRead(send, angvel, 3, dep);
+	RSPI0_WriteRead(cyclesend, angvel, 3, dep);
 }

@@ -16,6 +16,7 @@
 /*----------------------------------------------------------------------
 	定数定義
  ----------------------------------------------------------------------*/
+#define SCI_INTERRUPT_LEVEL			3
 #define SCI_RECV_RING_BUFFER_SIZE	32		// 受信リングバッファのサイズ
 #define SCI_SEND_RING_BUFFER_SIZE	256		// 送信リングバッファのサイズ
 #define C_MAX					12		// 整数表示の最大桁数
@@ -47,18 +48,21 @@ void SCI_Scanf(_UBYTE* str, ...);
  * @param void
  * @retval void
  */
+#pragma inline(SCI_IntTXI1)
 void SCI_IntTXI1(void);
 
 /** SCI1送信終了割り込み
  * @param void
  * @retval void
  */
+#pragma inline(SCI_IntTEI1)
 void SCI_IntTEI1(void);
 
 /** SCI1受信データフルによる割り込み
  * @param void
  * @retval void
  */
+#pragma inline(SCI_IntRXI1)
 void SCI_IntRXI1(void);
 
 /** シリアルコミュニケーションインタフェースの初期化

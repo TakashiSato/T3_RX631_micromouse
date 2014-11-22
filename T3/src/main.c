@@ -24,6 +24,9 @@
 #include "Devices/AS5055.h"
 #include "Devices/DRV8836.h"
 
+#include "Controller/MouseController.h"
+#include "Controller/Search.h"
+
 /*----------------------------------------------------------------------
 	Macro Definitions
  ----------------------------------------------------------------------*/
@@ -57,7 +60,7 @@ void main(void)
 	Switch_Initialize();
 
 	// スピーカーの初期化
-	Speaker_Initialize();
+//	Speaker_Initialize();
 
 	// シリアル通信環境の初期化
 	if(SERIAL_TARGET_IS_CONSOLE)
@@ -74,20 +77,28 @@ void main(void)
 	Printf("Hello!\n");
 
 	// 光センサの初期化
-//	LightSensor_Initialize();
+	LightSensor_Initialize();
 
 	// RSPIの初期化
 	InitializeRSPI0();
+	DispLED(0x01);
+	PlaySound(100);
 
 	// MPU6500の初期化
 //	MPU6500_Initialize();
+	DispLED(0x03);
+	PlaySound(100);
 
 	// AS5055の初期化
 	AS5055_Initialize();
+	DispLED(0x07);
+	PlaySound(100);
 
 	// DRV8836の初期化
 	DRV8836_Initialize();
 	DRV8836_Wakeup();
+	DispLED(0x0F);
+	PlaySound(100);
 
 	Printf("Start!\n");
 	PlaySound(500);
@@ -97,7 +108,8 @@ void main(void)
 	// SPIサイクル動作開始
 	RSPI0_StartCycleOperation();
 
-	int mode = 0;
+	// 制御器の初期化
+	MouseController_Initialize();
 
 	while (1)
 	{
@@ -107,48 +119,64 @@ void main(void)
 		// スイッチ入力判定
 		if(GetSwitchState())
 		{
-			PlaySound(100);
+			_UBYTE mode = ModeSelect();
+			WaitMS(100);
 
-			if(!mode)
+			switch(mode)
 			{
-				PORT3.PODR.BIT.B1 = 1;
-				PORT2.PODR.BIT.B7 = 1;
-				PORTE.PODR.BIT.B3 = 1;
-				PORTE.PODR.BIT.B1 = 1;
-				DRV8836_DriveMotor(MOTOR_TYPE_LEFT, MOTOR_DIR_CCW, 10);
-				DRV8836_DriveMotor(MOTOR_TYPE_RIGHT, MOTOR_DIR_CW, 10);
+			case 1:
+				LightSensor_GetBaseLR();
+				MouseControlle_MotorTest();
+				break;
+			case 2:
+				PlaySound(500);
+				PlaySound(500);
+				PlaySound(500);
+				WaitMS(1000);
+				LightSensor_GetBaseLR();
+				Search_Adachi();
+				break;
+//			case 2:
+//				// MPU6500用
+//				//AD128160_Locate(4, 0);
+//				while(!GetSwitchState())
+//				{
+//					Printf("AngVel:%6d\n", MPU6500_GetAngVel());
+//					DispLED((_UBYTE)(MPU6500_GetAngVel()/256));
+//					WaitMS(100);
+//				}
+//				break;
+			case 3:
+				// AS5055用
+				//AD128160_Locate(5, 0);
+				while(!GetSwitchState())
+				{
+					Printf(" LAng:%6d, ", AS5055_GetAngle(ENC_L));
+					Printf(" RAng:%6d\n", AS5055_GetAngle(ENC_R));
+					_UBYTE led = (_UBYTE)(AS5055_GetAngle(ENC_L)/512);
+					led = (led << 2) | ((_UBYTE)(AS5055_GetAngle(ENC_R)/512) & 0x03);
+					DispLED(led);
+					WaitMS(100);
+				}
+				break;
+			case 4:
+				while(!GetSwitchState())
+				{
+					Printf("Bat:%f\n", Battery_GetValue());
+					WaitMS(100);
+				}
+				break;
+			case 5:
+				MouseController_CheckValue();
+				break;
+			default:
+				//	LightSensor用
+				LightSensor_GetBaseLR();
+//				LightSensor_ValueCheckMode(false);
+				LightSensor_ValueCheckMode(true);
+				break;
 			}
-			else
-			{
-				PORT3.PODR.BIT.B1 = 0;
-				PORT2.PODR.BIT.B7 = 0;
-				PORTE.PODR.BIT.B3 = 0;
-				PORTE.PODR.BIT.B1 = 0;
-				DRV8836_DriveMotor(MOTOR_TYPE_LEFT, MOTOR_DIR_CW, 10);
-				DRV8836_DriveMotor(MOTOR_TYPE_RIGHT, MOTOR_DIR_CW, 10);
-			}
-			mode ^= 1;
-
-//			float bat = (float)ad/4096*3*2;
-//			AD128160_Locate(9, 0);
-//			Printf(" Bat:%.2f[V]\n", bat);
 		}
-
-//		// MPU6500用
-//		AD128160_Locate(4, 0);
-//		Printf("AngVel:%6d\n", MPU6500_GetAngVel());
-//
-//		// AS5055用
-//		AD128160_Locate(5, 0);
-		Printf(" LAng:%6d\n", AS5055_GetAngle(ENC_L));
-		Printf(" RAng:%6d\n", AS5055_GetAngle(ENC_R));
-
-		// LightSensor用
-//		AD128160_Locate(3, 0);
-//		Printf("AD0:%5d\n", LightSensor_GetADValue(0));
-//		Printf("AD1:%5d\n", LightSensor_GetADValue(1));
-//		Printf("AD2:%5d\n", LightSensor_GetADValue(2));
-//		Printf("AD3:%5d\n", LightSensor_GetADValue(3));
 
 		DispLED(0x00);
 		WaitMS(50);

@@ -20,6 +20,8 @@
 #define MDR_AENBL_TGR		MTU0.TGRC
 #define MDR_BENBL_TGR		MTU0.TGRD
 
+#define MDR_MAX_DUTY	30
+
 /*----------------------------------------------------------------------
 	Enum Definitions
  ----------------------------------------------------------------------*/
@@ -43,7 +45,7 @@ typedef enum eMotorDir
 	Public Method Declarations
  ----------------------------------------------------------------------*/
 void DRV8836_Initialize(void);
-bool DRV8836_DriveMotor(E_MOTOR_TYPE type, E_MOTOR_DIR dir, _UINT duty);
+bool DRV8836_DriveMotor(E_MOTOR_TYPE type, E_MOTOR_DIR dir, float duty);
 E_MOTOR_DIR DRV8836_GetMotorDirection(E_MOTOR_TYPE type);
 void DRV8836_SetSleep(void);
 void DRV8836_Wakeup(void);

@@ -1,10 +1,10 @@
 /**
- * @file  LED.h
- * @brief LEDの動作を司るクラス
+ * @file  HardwareParameter.h
+ * @brief ハードウェアパラメータを記述したヘッダ
  */
 
-#ifndef __LED_H__
-#define __LED_H__
+#ifndef __HARDWAREPARAMETER_H__
+#define __HARDWAREPARAMETER_H__
 /*----------------------------------------------------------------------
 	Includes
  ----------------------------------------------------------------------*/
@@ -13,15 +13,11 @@
 /*----------------------------------------------------------------------
 	Macro Definitions
  ----------------------------------------------------------------------*/
-#define LED0	PORTE.PODR.BIT.B3		//LED0接続端子
-#define LED1	PORTE.PODR.BIT.B1		//LED1接続端子
-#define LED2	PORT3.PODR.BIT.B1		//LED2接続端子
-#define LED3	PORT2.PODR.BIT.B7		//LED3接続端子
+#define HW_WHEEL_DIAM	17		// 車輪径 [mm]
+#define HW_TREAD_WIDTH	38.5	// トレッド幅 [mm]
 
 /*----------------------------------------------------------------------
 	Public Method Declarations
  ----------------------------------------------------------------------*/
-void LED_Initialize(void);
-void LED_Disp(_UBYTE lightPattern);
 
-#endif
+#endif /* __HARDWAREPARAMETER_H__ */

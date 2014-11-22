@@ -243,9 +243,9 @@ void SCI_InitializeSerialPort(long baudrate)
 	SCI1.SCR.BIT.RIE = 1;			// RXI割り込み要求を許可
 
 	// 割り込みレベル設定
-	IPR(SCI1, RXI1)= 5;
-	IPR(SCI1, TXI1)= 5;
-	IPR(SCI1, TEI1)= 5;
+	IPR(SCI1, RXI1)= SCI_INTERRUPT_LEVEL;
+	IPR(SCI1, TXI1)= SCI_INTERRUPT_LEVEL;
+	IPR(SCI1, TEI1)= SCI_INTERRUPT_LEVEL;
 
 	// 割り込み要求を許可
 	IEN(SCI1, RXI1) = 1;

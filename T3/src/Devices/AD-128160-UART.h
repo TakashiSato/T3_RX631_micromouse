@@ -76,9 +76,11 @@ void AD128160_InitializeSerialPort(long baudrate);
  * @param void
  * @retval void
  */
+#pragma inline(AD128160_IntTEI1)
 void AD128160_IntTEI1(void);
 
 // ==== 送信データエンプティによる割り込み ====
+#pragma inline(AD128160_IntTXI1)
 void AD128160_IntTXI();
 
 // ==== 1byte送信バッファへ格納 ====

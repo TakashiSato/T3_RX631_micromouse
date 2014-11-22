@@ -15,10 +15,10 @@
 #include "iodefine.h"
 #include "Global.h"
 #include "Peripherals/SerialPort.h"
-#include "Peripherals/Timer.h"
 #include "Peripherals/RSPI.h"
 #include "Devices/LightSensor.h"
 #include "Devices/AD-128160-UART.h"
+#include "Controller/MouseController.h"
 
 #pragma section IntPRG
 
@@ -53,13 +53,13 @@ void Excep_FCUIF_FRDYI(void){ }
 void Excep_ICU_SWINT(void){ }
 
 // CMTU0_CMT0
-void Excep_CMT0_CMI0(void)
-{
-//	LightSensor_IntCMT0();
-}
+void Excep_CMT0_CMI0(void){ }
 
 // CMTU1_CMT1
-void Excep_CMT1_CMI1(void){ }
+void Excep_CMT1_CMI1(void)
+{
+	RSPI0_IntCMT1();
+}
 
 // CMTU2_CMT2
 void Excep_CMT2_CMI2(void){ }
@@ -91,18 +91,12 @@ void Excep_USB1_USBI1(void){ }
 // RSPI0 SPRI0
 void Excep_RSPI0_SPRI0(void)
 {
-//	AS5055_Int_SPRI0();
-//	MPU6500_Int_SPRI0();
-
 	Int_SPRI0();
 }
 
 // RSPI0 SPTI0
 void Excep_RSPI0_SPTI0(void)
 {
-//	AS5055_Int_SPTI0();
-//	MPU6500_Int_SPTI0();
-
 	Int_SPTI0();
 }
 
@@ -334,7 +328,10 @@ void Excep_TPU7_TGIA7(void){ }
 void Excep_TPU7_TGIB7(void){ }
 
 // TPU8/MTU2 TGIA8/TGIA2
-void Excep_TPU8_TGIA8(void){ }
+void Excep_TPU8_TGIA8(void)
+{
+	MouseController_IntMTU2TGIA();
+}
 
 // TPU8/MTU2 TGIB8/TGIB2
 void Excep_TPU8_TGIB8(void){ }

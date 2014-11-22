@@ -6,10 +6,11 @@
 /*----------------------------------------------------------------------
 	Includes
  ----------------------------------------------------------------------*/
+#include "RSPI.h"
 #include <stdlib.h>
 #include <stdbool.h>
 #include "../iodefine.h"
-#include "RSPI.h"
+#include "../Global.h"
 
 /*----------------------------------------------------------------------
 	Typedef definitions
@@ -48,7 +49,7 @@ static rspi_tcb_t g_rspi_tcb = {0};
 // Cycle Operation 関連
 static bool spiCycleoperationFlag = false;		// Cycle Operation実行フラグ
 static _UBYTE g_registerdCycleDeviceNum = 0;	// Cycle Operationで処理するデバイスの数
-static _UBYTE g_cycleTargetPtr = 0;				// Cycle Operationで現在処理するデバイスのナンバー
+static _SBYTE g_cycleTargetPtr = 0;				// Cycle Operationで現在処理するデバイスのナンバー
 static void (*g_cycleSendFunc[])(void);			// Cycle Operationでデバイスにコマンドを送る関数
 
 
@@ -73,6 +74,7 @@ static void RSPI0_InterruptsEnable(bool enabled);
 static void RSPI0_TxRxCommon(void);
 // Cycle Operation 実行関数
 static void RSPI0_CycleOperation(void);
+static void RSPI0_InitializeCMT1(void);
 
 /*----------------------------------------------------------------------
 	Public Method Definitions
@@ -84,6 +86,7 @@ static void RSPI0_CycleOperation(void);
 void InitializeRSPI0(void)
 {
 	RSPI0_Open();
+	RSPI0_InitializeCMT1();
 }
 
 /** RSPI0受信データフル割り込み
@@ -140,7 +143,7 @@ void Int_SPII0(void)
  */
 void Int_SPEI0(void)
 {
-	Printf("SPI0 Error\n");
+//	Printf("SPI0 Error\n");
 
 	/* Identify and clear error condition. */
 	if(RSPI0.SPSR.BIT.OVRF) // Overrun error.
@@ -162,6 +165,17 @@ void Int_SPEI0(void)
 	/* Disable the RSPI channel (terminates the transfer operation). */
 	RSPI0.SPCR.BIT.SPRIE = 0;  /* Disable SPRI interrupt. */
 	RSPI0.SPCR.BIT.SPE   = 0;  /* Disable RSPI. */
+}
+
+/**
+ * CycleOpearationウェイト管理用CMT1割り込み
+ * @param void
+ * @retval void
+ */
+void RSPI0_IntCMT1(void)
+{
+	CMT.CMSTR0.BIT.STR1 = 0;	// CMT1.CMCNTカウンタのカウント動作停止
+	RSPI0_CycleOperation();		// CycleOperation再開
 }
 
 /** RSPI0で読み込みを行う
@@ -481,10 +495,43 @@ static void RSPI0_TxRxCommon(void)
 static void RSPI0_CycleOperation(void)
 {
 	// ターゲットを次のデバイスに変更する
-	if (++g_cycleTargetPtr >= g_registerdCycleDeviceNum)
+	g_cycleTargetPtr++;
+
+	// 1周したら割り込み処理で指定時間ウェイトした後に始めのデバイスから再開
+	if (g_cycleTargetPtr >= g_registerdCycleDeviceNum)
 	{
-		g_cycleTargetPtr = 0;
+		g_cycleTargetPtr = -1;		// 次のCycleでインクリメントしたときに0になるようにするため-1
+		CMT1.CMCNT = 0;				// カウンタの初期化
+		CMT.CMSTR0.BIT.STR1 = 1;	// CMT1.CMCNTカウンタのカウント動作開始
 	}
-	// デバイスにコマンドを送る
-	g_cycleSendFunc[g_cycleTargetPtr]();
+	else
+	{
+		// デバイスにコマンドを送る
+		g_cycleSendFunc[g_cycleTargetPtr]();
+	}
+}
+
+/** コンペアマッチタイマ1(CMT1)の初期化
+ * @param void
+ * @retval void
+ */
+static void RSPI0_InitializeCMT1(void)
+{
+	MSTP(CMT1) = 0;						// CMTユニット1(CMT1)モジュールストップ状態の解除
+
+	CMT.CMSTR0.BIT.STR1 = 0;			// CMT1.CMCNTカウンタのカウント動作停止
+	// カウントクロック
+	// (0:8分周, 1:32分周, 2:128分周, 3:512分周)
+	CMT1.CMCR.BIT.CKS = 1;				// カウントクロック
+	CMT1.CMCR.BIT.CMIE = 1;				// コンペアマッチ割り込みの許可
+	CMT1.CMCOR = RSPI_CYCLE_INTERVAL;	// コンペアマッチ周期
+	CMT1.CMCNT = 0;						// タイマカウンタの初期化
+
+	// 割り込みレベル設定
+	IPR(CMT1, CMI1)= 6;
+
+	// 割り込み要求を許可
+	IEN(CMT1, CMI1) = 1;
+
+//	CMT.CMSTR0.BIT.STR1 = 1;			// CMT1.CMCNTカウンタのカウント動作開始
 }

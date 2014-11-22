@@ -13,11 +13,12 @@
 /*----------------------------------------------------------------------
 	Private global variables
  ----------------------------------------------------------------------*/
-static const _UINT PWM_FREQ = 1200;		// PWMの周期(1200:10kHz)
+static const _UINT PWM_FREQ = 4800;		// PWMの周期(4800:10kHz)
 static _UINT _motorA_duty = 0;			// モータAのDuty
 static _UINT _motorB_duty = 0;			// モータBのDuty
 static E_MOTOR_DIR _motorA_dir = MOTOR_DIR_CW;			// モータAの回転方向
 static E_MOTOR_DIR _motorB_dir = MOTOR_DIR_CW;			// モータBの回転方向
+static bool _working = false;
 
 /*----------------------------------------------------------------------
 	Private Method Declarations
@@ -45,8 +46,6 @@ void DRV8836_Initialize(void)
 	DRV8836_DriveMotor(MOTOR_TYPE_RIGHT, MOTOR_DIR_CW, 0);
 	// Wait
 	WaitMS(100);
-	// モータドライバを動作状態に移行
-//	DRV8836_Wakeup();
 }
 
 /** モータ1の出力PWMのDutyを設定する
@@ -55,19 +54,22 @@ void DRV8836_Initialize(void)
  * @param duty : 設定するduty比 0-100[%]
  * @retval bool : 正常に設定できればtrueを返す
  */
-bool DRV8836_DriveMotor(E_MOTOR_TYPE type, E_MOTOR_DIR dir, _UINT duty)
+bool DRV8836_DriveMotor(E_MOTOR_TYPE type, E_MOTOR_DIR dir, float duty)
 {
 	_UINT tgr;
 
 	// Check param
-	if( 100 < duty ||
-		(dir != MOTOR_DIR_CW && dir != MOTOR_DIR_CCW) ||
+	if(	(dir != MOTOR_DIR_CW  && dir != MOTOR_DIR_CCW) ||
 		(type != MOTOR_TYPE_LEFT && type != MOTOR_TYPE_RIGHT))
 	{
 		return false;
 	}
+	if (duty >= MDR_MAX_DUTY)
+	{
+		duty = MDR_MAX_DUTY;
+	}
 
-	tgr = (PWM_FREQ / 100) * duty;
+	tgr = (_UINT)(((float)PWM_FREQ / 100.0) * duty);
 
 	switch(type)
 	{
@@ -89,6 +91,17 @@ bool DRV8836_DriveMotor(E_MOTOR_TYPE type, E_MOTOR_DIR dir, _UINT duty)
 			return false;
 			break;
 	}
+
+//	if(_motorA_duty == 0 && _motorB_duty == 0)
+//	{
+//		_working = false;
+//		DRV8836_SetSleep();
+//	}
+//	else
+//	{
+//		_working = true;
+//		DRV8836_Wakeup();
+//	}
 
 	return true;
 }
@@ -179,9 +192,9 @@ static void DRV8836_InitializeMTU(void)
 	MTU1.TCNT = 0;
 
 	// カウンタクロックの選択
-	MTU0.TCR.BIT.TPSC = 1;		// タイマプリスケーラ:PCLK/4
+	MTU0.TCR.BIT.TPSC = 0;		// タイマプリスケーラ:PCLK/1
 	MTU0.TCR.BIT.CKEG = 0;		// 入力クロックエッジ:立ち上がりエッジでカウント
-	MTU1.TCR.BIT.TPSC = 1;		// タイマプリスケーラ:PCLK/4
+	MTU1.TCR.BIT.TPSC = 0;		// タイマプリスケーラ:PCLK/1
 	MTU1.TCR.BIT.CKEG = 0;		// 入力クロックエッジ:立ち上がりエッジでカウント
 
 	// カウンタクリア要因の選択

@@ -17,6 +17,7 @@
 /*----------------------------------------------------------------------
 	グローバル変数の定義
  ----------------------------------------------------------------------*/
+volatile struct stMouseFlags _MF;
 
 /*----------------------------------------------------------------------
 	プログラム全体で使う関数の定義
@@ -33,3 +34,4 @@ void (*WaitUS)(_UINT usec) = Timer_WaitUS;
 void (*DispLED)(_UBYTE lightPattern) = LED_Disp;
 void (*PlaySound)(_UINT freq) = Speaker_PlaySound;
 bool (*GetSwitchState)(void) = Switch_GetState;
+_UBYTE (*ModeSelect)(void) = Switch_ModeSelect;

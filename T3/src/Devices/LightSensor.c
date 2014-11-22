@@ -16,6 +16,8 @@ static _UBYTE _tp = 0;	// タスクポインタ
 static _UBYTE _sensorCh = 0;	// 処理対象センサチャンネル
 static _UWORD _ledOffAdVal[4];	// フィルタ用LEDオフ時A/D値格納
 static _UWORD _ledOnAdVal[4];	// フィルタ用LEDオン時A/D値格納
+static _UWORD _batteryAdVal;	// バッテリー電圧A/D値格納
+static volatile LSVal _LS;		// A/D値格納構造体
 
 /*----------------------------------------------------------------------
 	Private Method Declarations
@@ -25,6 +27,7 @@ static void LightSensor_InitializeADC(void);
 static void LightSensor_InitializeDMAC(void);
 static void LightSensor_InitializeMTU3(void);
 static void LightSensor_SetLedState(_UBYTE ch, E_IR_LED_STATE state);
+static _SWORD LightSensor_GetADValueSingle(E_LS_CHANNEL ch);
 
 /*----------------------------------------------------------------------
 	Public Method Definitions
@@ -39,6 +42,11 @@ void LightSensor_Initialize(void)
 	LightSensor_InitializeDMAC();		// DMACの初期化
 	LightSensor_InitializeADC();		// 12ビットA/Dコンバータの初期化
 	LightSensor_InitializeMTU3();		// MTU3の初期化
+
+	_LS.Now.FwdL = 0, _LS.Now.FwdR = 0, _LS.Now.Left = 0, _LS.Now.Right = 0;
+	_LS.Old.FwdL = 0, _LS.Old.FwdR = 0, _LS.Old.Left = 0, _LS.Old.Right = 0;
+	_LS.Delta.FwdL = 0, _LS.Delta.FwdR = 0, _LS.Delta.Left = 0, _LS.Delta.Right = 0;
+	_LS.Dif.FwdL = 0, _LS.Dif.FwdR = 0, _LS.Dif.Left = 0, _LS.Dif.Right = 0;
 }
 
 /** DMA転送終了割り込み
@@ -89,8 +97,26 @@ void LightSensor_IntDMAC0(void)
 		DMAC0.DMDAR = (void*)&(_ledOffAdVal[_sensorCh]);// DMAC転送先アドレス設定
 		MTU3.TGRA = GET_INTERVAL;
 		break;
+//	case 7:
+//		LightSensor_SetLedState(_sensorCh, IR_LED_OFF);	// IRLED消灯
+//		S12AD.ADANS0.WORD = 0x0001;						// AN000を変換対象とする
+//		S12AD.ADADS0.BIT.ADS0 = 0x0001;					// AN000をA/D変換値加算に設定
+//		DMAC0.DMSAR = (void*)&S12AD.ADDR0;				// DMAC転送元アドレス設定:AN000
+//		_sensorCh = 0;
+//		DMAC0.DMDAR = (void*)&(_ledOffAdVal[_sensorCh]);// DMAC転送先アドレス設定
+//		MTU3.TGRA = GET_INTERVAL;
+//		break;
 	case 7:
+		// for LiPO battery
 		LightSensor_SetLedState(_sensorCh, IR_LED_OFF);	// IRLED消灯
+		S12AD.ADANS0.WORD = 0x1000;						// AN012を変換対象とする
+		S12AD.ADADS0.BIT.ADS0 = 0x1000;					// AN012をA/D変換値加算に設定
+		DMAC0.DMSAR = (void*)&S12AD.ADDR12;				// DMAC転送元アドレス設定:AN012
+		DMAC0.DMDAR = (void*)&_batteryAdVal;			// DMAC転送先アドレス設定
+		MTU3.TGRA = GET_INTERVAL;
+		break;
+	case 8:
+//		LightSensor_SetLedState(_sensorCh, IR_LED_OFF);	// IRLED消灯
 		S12AD.ADANS0.WORD = 0x0001;						// AN000を変換対象とする
 		S12AD.ADADS0.BIT.ADS0 = 0x0001;					// AN000をA/D変換値加算に設定
 		DMAC0.DMSAR = (void*)&S12AD.ADDR0;				// DMAC転送元アドレス設定:AN000
@@ -104,7 +130,7 @@ void LightSensor_IntDMAC0(void)
 
 	// タスクポインタを進める
 	_tp++;
-	if (_tp >= 8)
+	if (_tp >= 9)
 	{
 		_tp = 0;
 	}
@@ -117,14 +143,92 @@ void LightSensor_IntDMAC0(void)
 	MTU.TSTR.BIT.CST3 = 1;		// MTU3カウント動作開始
 }
 
-/** AD値取得
- * @param ch: 取得するチャンネル
- * @retval _SWORD: AD値
+/**
+ * 光センサの各値を取得する
+ * @param void
+ * @retval LSVal*: 光センサ値格納構造体へのポインタ
  */
-_SWORD LightSensor_GetADValue(_UBYTE ch)
+LSVal* LightSensor_GetValue(void)
 {
-//	return (_SWORD)(_ledOnAdVal[ch]) - _ledOffAdVal[ch];
-	return ((_SWORD)(_ledOnAdVal[ch] >> 2) - (_ledOffAdVal[ch] >> 2)) / ADC_SAMPLING_NUM;
+	_LS.Now.FwdL = LightSensor_GetADValueSingle(LS_FWD_L);
+	_LS.Now.Left = LightSensor_GetADValueSingle(LS_LEFT);
+	_LS.Now.Right = LightSensor_GetADValueSingle(LS_RIGHT);
+	_LS.Now.FwdR = LightSensor_GetADValueSingle(LS_FWD_R);
+
+	_LS.Dif.FwdL = _LS.Now.FwdL - _LS.Base.FwdL;
+	_LS.Dif.Left = _LS.Now.Left - _LS.Base.Left;
+	_LS.Dif.Right = _LS.Now.Right - _LS.Base.Right;
+	_LS.Dif.FwdR = _LS.Now.FwdR - _LS.Base.FwdR;
+
+	return &_LS;
+}
+
+/**
+ * 左右センサ基準値取得
+ * @param void
+ * @retval void
+ */
+void LightSensor_GetBaseLR(void)
+{
+	_LS.Base.Left = LightSensor_GetADValueSingle(LS_LEFT);
+	_LS.Base.Right = LightSensor_GetADValueSingle(LS_RIGHT);
+
+	//----基準が理想的だとLED点滅----
+	if ((-100 < (_LS.Base.Left - _LS.Base.Right)
+			&& (_LS.Base.Left - _LS.Base.Right) < 100))
+	{
+		DispLED(0x0F);
+		WaitMS(200);
+		DispLED(0x00);
+	}
+}
+
+void LightSensor_ValueCheckMode(bool scion)
+{
+	_UBYTE ledPatter = 0;
+
+	if(scion)
+	{
+		Printf("LS:\n");
+	}
+	while(!GetSwitchState())
+	{
+		ledPatter = 0;
+		LightSensor_GetValue();
+
+		if(scion)
+		{
+			//AD128160_Locate(3, 0);
+			Printf("%5d, ", _LS.Now.FwdL);
+			Printf("%5d, ", _LS.Now.Left);
+			Printf("%5d, ", _LS.Now.Right);
+			Printf("%5d, ", _LS.Now.FwdR);
+			Printf("%5d, ", _LS.Dif.FwdL);
+			Printf("%5d, ", _LS.Dif.Left);
+			Printf("%5d, ", _LS.Dif.Right);
+			Printf("%5d\n", _LS.Dif.FwdR);
+		}
+
+		if(_LS.Now.FwdL >= WALL_BASE_FWD_L)		ledPatter |= 0x08;
+		if(_LS.Now.Left >= WALL_BASE_LEFT)		ledPatter |= 0x04;
+		if(_LS.Now.Right >= WALL_BASE_RIGHT)	ledPatter |= 0x02;
+		if(_LS.Now.FwdR >= WALL_BASE_FWD_R)		ledPatter |= 0x01;
+
+		DispLED(ledPatter);
+		WaitMS(50);
+	}
+}
+
+/**
+ * LiPOバッテリーAD値取得
+ * @param void
+ * @retbal flaot: 電圧値
+ */
+float Battery_GetValue(void)
+{
+	_UWORD ad = (_batteryAdVal >> 2) / ADC_SAMPLING_NUM;
+	Printf("ad:%d\n", ad);
+	return (float)ad * 2.0 * 3.0 / 4096;
 }
 
 /*----------------------------------------------------------------------
@@ -159,6 +263,10 @@ static void LightSensor_InitializePort(void)
 	PORT4.PDR.BIT.B1 = 0;		// P41を入力ポートに設定
 	PORT4.PDR.BIT.B2 = 0;		// P42を入力ポートに設定
 	PORT4.PDR.BIT.B6 = 0;		// P46を入力ポートに設定
+	// LiPOバッテリー電圧監視用
+	PORTE.PMR.BIT.B4 = 0;		// PE4を汎用入出力ポートに設定
+	PORTE.PDR.BIT.B4 = 0;		// PE4を入力ポートに設定
+
 
 	// ピン機能設定
 	MPC.PWPR.BIT.B0WI = 0;		// PFSWEレジスタへの書き込みを許可
@@ -167,6 +275,7 @@ static void LightSensor_InitializePort(void)
 	MPC.P41PFS.BIT.ASEL = 1;	// P41をアナログ端子(AN001)として使用
 	MPC.P42PFS.BIT.ASEL = 1;	// P42をアナログ端子(AN002)として使用
 	MPC.P46PFS.BIT.ASEL = 1;	// P46をアナログ端子(AN006)として使用
+	MPC.PE4PFS.BIT.ASEL = 1;	// PE4をアナログ端子(AN012)として使用
 	MPC.PWPR.BYTE = 0x80;		// PFSレジスタ,PFSWEビットへの書き込みを禁止
 }
 
@@ -275,18 +384,28 @@ static void LightSensor_SetLedState(_UBYTE ch, E_IR_LED_STATE state)
 	switch(ch)
 	{
 	case 0:
-		IR_LED0 = state;
+		IR_LED_FWD_L = state;
 		break;
 	case 1:
-		IR_LED1 = state;
+		IR_LED_LEFT = state;
 		break;
 	case 2:
-		IR_LED2 = state;
+		IR_LED_RIGHT = state;
 		break;
 	case 3:
-		IR_LED3 = state;
+		IR_LED_FWD_R = state;
 		break;
 	default:
 		break;
 	}
+}
+
+/** 単チャンネルAD値取得
+ * @param ch: 取得するチャンネル
+ * @retval _SWORD: AD値
+ */
+static _SWORD LightSensor_GetADValueSingle(E_LS_CHANNEL ch)
+{
+//	return (_SWORD)(_ledOnAdVal[ch]) - _ledOffAdVal[ch];
+	return ((_SWORD)(_ledOnAdVal[ch] >> 2) - (_ledOffAdVal[ch] >> 2)) / ADC_SAMPLING_NUM;
 }

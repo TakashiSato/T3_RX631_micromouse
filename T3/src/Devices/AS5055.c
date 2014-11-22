@@ -10,6 +10,8 @@
 #include "../iodefine.h"
 #include "../Peripherals/RSPI.h"
 
+#include "../Global.h"
+
 /*----------------------------------------------------------------------
 	Private global variables
  ----------------------------------------------------------------------*/
@@ -18,8 +20,10 @@ static RSPI_DEPENDENCE EncR_dep;	// RSPIペリフェラル依存パラメータ
 static _UWORD EncL_send[2] = {0};	// SPI送信データ格納用
 static _UWORD EncR_send[2] = {0};	// SPI送信データ格納用
 //static _UWORD recv[2] = {0};		// SPI送信データ格納用
-static _UWORD EncL_angle[1];		// 磁気エンコーダ角度情報格納用
-static _UWORD EncR_angle[1];		// 磁気エンコーダ角度情報格納用
+static _UWORD EncL_angle[ENCODER_SAMPLING_NUM] = {0};		// 磁気エンコーダ角度情報格納用
+static _UWORD EncR_angle[ENCODER_SAMPLING_NUM] = {0};		// 磁気エンコーダ角度情報格納用
+static volatile _UBYTE _tpL = 0;
+static volatile _UBYTE _tpR = 0;
 
 /*----------------------------------------------------------------------
 	Private Method Declarations
@@ -57,17 +61,25 @@ void AS5055_Initialize(void)
  */
 _UWORD AS5055_GetAngle(E_AS5055_LR encLR)
 {
-	_UWORD ang = 0xFFFF;
+	_UWORD ang = 0;
 
 	switch(encLR)
 	{
 	case ENC_L:
-		ang = (_UWORD)((EncL_angle[0] >> 2) & 0x0FFF);
+		for(int i = 0; i < ENCODER_SAMPLING_NUM; i++)
+		{
+			ang += (_UWORD)((EncL_angle[i] >> 2) & 0x0FFF);
+		}
 		break;
 	case ENC_R:
-		ang = (_UWORD)((EncR_angle[0] >> 2) & 0x0FFF);
+		for(int i = 0; i < ENCODER_SAMPLING_NUM; i++)
+		{
+			ang += (_UWORD)((EncR_angle[i] >> 2) & 0x0FFF);
+		}
 		break;
 	}
+
+	ang /= ENCODER_SAMPLING_NUM;
 
 	return ang;
 }
@@ -89,12 +101,12 @@ static void AS5055_InitializeRSPI0(void)
 //	RSPI0.SPCMD0.BIT.SCKDEN = 1;// RSPCK遅延はSPCKDレジスタの設定値
 
 	// 左エンコーダ用
-	EncL_dep.brdv_val = 3;	// ベースのビットレートの8分周:1Mbps(=T:10nS)
-	EncL_dep.cpha_val = 1;	// 奇数エッジでデータ変化,偶数エッジでデータサンプル
-	EncL_dep.cpol_val = 0;	// アイドル時のRSPCK:Low
-	EncL_dep.sslkp_val = 0;	// 転送終了時にSSL信号をネゲート
-	EncL_dep.spb_val = 15;	// データ長:16ビット
-	EncL_dep.lsbf_val = 0;	// MSBファースト
+	EncL_dep.brdv_val = 3;		// ベースのビットレートの8分周:1Mbps(=T:10nS)
+	EncL_dep.cpha_val = 1;		// 奇数エッジでデータ変化,偶数エッジでデータサンプル
+	EncL_dep.cpol_val = 0;		// アイドル時のRSPCK:Low
+	EncL_dep.sslkp_val = 0;		// 転送終了時にSSL信号をネゲート
+	EncL_dep.spb_val = 15;		// データ長:16ビット
+	EncL_dep.lsbf_val = 0;		// MSBファースト
 	EncL_dep.spnden_val = 1;	// 次アクセス遅延はSPNDレジスタの設定値
 	EncL_dep.slnden_val = 1;	// SSLネゲート遅延はSSLNDレジスタの設定値
 	EncL_dep.sckden_val = 1;	// RSPCK遅延はSPCKDレジスタの設定値
@@ -105,12 +117,12 @@ static void AS5055_InitializeRSPI0(void)
 	RSPI0_RegisterDeviceForCycleOperation(AS5055_LeftEnc_CycleSendCommand);
 
 	// 右エンコーダ用
-	EncR_dep.brdv_val = 3;	// ベースのビットレートの8分周:1Mbps(=T:10nS)
-	EncR_dep.cpha_val = 1;	// 奇数エッジでデータ変化,偶数エッジでデータサンプル
-	EncR_dep.cpol_val = 0;	// アイドル時のRSPCK:Low
-	EncR_dep.sslkp_val = 0;	// 転送終了時にSSL信号をネゲート
-	EncR_dep.spb_val = 15;	// データ長:16ビット
-	EncR_dep.lsbf_val = 0;	// MSBファースト
+	EncR_dep.brdv_val = 3;		// ベースのビットレートの8分周:1Mbps(=T:10nS)
+	EncR_dep.cpha_val = 1;		// 奇数エッジでデータ変化,偶数エッジでデータサンプル
+	EncR_dep.cpol_val = 0;		// アイドル時のRSPCK:Low
+	EncR_dep.sslkp_val = 0;		// 転送終了時にSSL信号をネゲート
+	EncR_dep.spb_val = 15;		// データ長:16ビット
+	EncR_dep.lsbf_val = 0;		// MSBファースト
 	EncR_dep.spnden_val = 1;	// 次アクセス遅延はSPNDレジスタの設定値
 	EncR_dep.slnden_val = 1;	// SSLネゲート遅延はSSLNDレジスタの設定値
 	EncR_dep.sckden_val = 1;	// RSPCK遅延はSPCKDレジスタの設定値
@@ -228,16 +240,21 @@ static _UWORD AppendEvenParity(_UWORD command)
  */
 static void AS5055_LeftEnc_CycleSendCommand(void)
 {
-	_UWORD command;
+//	_UWORD command;
+//
+//	// 角度情報を取得
+//	// 送信用に1ビット左にシフトし，先頭にReadコマンドを付加
+//	command = (ASREG_ANGULAR_DATA << 1) | AS_READ_FLAG;
+//
+//	// 末尾に偶数パリティを付加
+//	EncL_send[0] = AppendEvenParity(command);
 
-	// 角度情報を取得
-	// 送信用に1ビット左にシフトし，先頭にReadコマンドを付加
-	command = (ASREG_ANGULAR_DATA << 1) | AS_READ_FLAG;
+	// コマンドは決まっているので,処理量削減のために予めコマンドを与える
+	EncL_send[0] = 0xFFFF;
 
-	// 末尾に偶数パリティを付加
-	EncL_send[0] = AppendEvenParity(command);
-
-	RSPI0_WriteRead(EncL_send, EncL_angle, 1, EncL_dep);
+	RSPI0_WriteRead(EncL_send, &EncL_angle[_tpL], 1, EncL_dep);
+	_tpL++;
+	if(_tpL >= ENCODER_SAMPLING_NUM) _tpL = 0;
 }
 
 /** RSPI0 Cycle Operation で送信するコマンド(右エンコーダ角度情報取得)
@@ -246,14 +263,18 @@ static void AS5055_LeftEnc_CycleSendCommand(void)
  */
 static void AS5055_RightEnc_CycleSendCommand(void)
 {
-	_UWORD command;
+//	_UWORD command;
+//
+//	// 角度情報を取得
+//	// 送信用に1ビット左にシフトし，先頭にReadコマンドを付加
+//	command = (ASREG_ANGULAR_DATA << 1) | AS_READ_FLAG;
+//
+//	// 末尾に偶数パリティを付加
+//	EncR_send[0] = AppendEvenParity(command);
+	// コマンドは決まっているので,処理量削減のために予めコマンドを与える
+	EncR_send[0] = 0xFFFF;
 
-	// 角度情報を取得
-	// 送信用に1ビット左にシフトし，先頭にReadコマンドを付加
-	command = (ASREG_ANGULAR_DATA << 1) | AS_READ_FLAG;
-
-	// 末尾に偶数パリティを付加
-	EncR_send[0] = AppendEvenParity(command);
-
-	RSPI0_WriteRead(EncR_send, EncR_angle, 1, EncR_dep);
+	RSPI0_WriteRead(EncR_send, &EncR_angle[_tpR], 1, EncR_dep);
+	_tpR++;
+	if(_tpR >= ENCODER_SAMPLING_NUM) _tpR = 0;
 }
