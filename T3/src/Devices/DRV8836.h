@@ -20,8 +20,6 @@
 #define MDR_AENBL_TGR		MTU0.TGRC
 #define MDR_BENBL_TGR		MTU0.TGRD
 
-#define MDR_MAX_DUTY	30
-
 /*----------------------------------------------------------------------
 	Enum Definitions
  ----------------------------------------------------------------------*/

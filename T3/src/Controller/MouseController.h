@@ -19,28 +19,28 @@
 #define CONTROL_INTERVEL_INVSEC	1000	// [sec]単位制御周期の逆数[1/sec]
 
 // ==== 制御基準値 ====
-#define CTRL_REF_MIN_L	-500			// 左制御基準下限
+#define CTRL_REF_MIN_L	-300			// 左制御基準下限
 #define CTRL_REF_MAX_L	500				// 左制御基準上限
-#define CTRL_REF_MIN_R	-500			// 右制御基準下限
+#define CTRL_REF_MIN_R	-300			// 右制御基準下限
 #define CTRL_REF_MAX_R	500				// 右制御基準上限
 
 // ==== 走行距離 ====
-#define DR_SEC_HALF			30.0	// 半区画走行
-#define DR_ROT_R90			9.8		// 右90度回転
-#define DR_ROT_L90			9.8		// 左90度回転
-#define DR_ROT_R180			24.0	// 右180度回転
-#define DR_ROT_L180			28.0	// 左180度回転
+#define DR_SEC_HALF			24.0	// 半区画走行
+#define DR_ROT_R90			20.0	// 右90度回転
+#define DR_ROT_L90			20.0	// 左90度回転
+#define DR_ROT_R180			50.0	// 右180度回転
+#define DR_ROT_L180			50.0	// 左180度回転
 #define DR_CENT_SET			8.0		// 後ろ壁から中央までの距離
 
 #define DEF_V0		8
-#define DEF_V_CONST	15
+#define DEF_V_CONST	30
 #define DEF_VMIN	8
 #define DEF_VMAX	25
 #define DEF_ACC		60
-#define DEF_ANGV0	1
-#define DEF_ANGVMIN 0.4
-#define DEF_ANGVMAX	0.7
-#define DEF_ANGACC	1
+#define DEF_ANGV0	0.3
+#define DEF_ANGVMIN 0.3
+#define DEF_ANGVMAX	0.3
+#define DEF_ANGACC	0
 
 /*----------------------------------------------------------------------
 	Struct Definitions

@@ -15,8 +15,8 @@
  ----------------------------------------------------------------------*/
 #define	RSPI_DUMMY_TXDATA		(0xFFFFFFFF)
 
-#define RSPI_CYCLE_INTERVAL		375	// Cycleモードの周期 375: 250[uSec]
-//#define RSPI_CYCLE_INTERVAL		1500	// Cycleモードの周期 1500: 1[mSec]
+//#define RSPI_CYCLE_INTERVAL		375	// Cycleモードの周期 375: 250[uSec]
+#define RSPI_CYCLE_INTERVAL		1500	// Cycleモードの周期 1500: 1[mSec]
 
 /*----------------------------------------------------------------------
 	Typedef definitions

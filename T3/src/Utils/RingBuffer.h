@@ -16,7 +16,7 @@
  ----------------------------------------------------------------------*/
 /** リングバッファの機能を提供するクラスっぽい構造体
  */
-typedef volatile struct stRingbuffer
+typedef struct stRingbuffer
 {
 	// プロパティ
 	_UWORD size;		// バッファサイズ

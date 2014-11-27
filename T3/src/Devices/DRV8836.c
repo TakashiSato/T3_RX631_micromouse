@@ -13,7 +13,8 @@
 /*----------------------------------------------------------------------
 	Private global variables
  ----------------------------------------------------------------------*/
-static const _UINT PWM_FREQ = 4800;		// PWMの周期(4800:10kHz)
+static const _UINT PWM_FREQ = 256;		// PWMの周期(256:187.5kHz)
+static const float DUTY_MAX	= 25.0;		// dutyの最大値[%]
 static _UINT _motorA_duty = 0;			// モータAのDuty
 static _UINT _motorB_duty = 0;			// モータBのDuty
 static E_MOTOR_DIR _motorA_dir = MOTOR_DIR_CW;			// モータAの回転方向
@@ -64,12 +65,14 @@ bool DRV8836_DriveMotor(E_MOTOR_TYPE type, E_MOTOR_DIR dir, float duty)
 	{
 		return false;
 	}
-	if (duty >= MDR_MAX_DUTY)
+	if (duty >= DUTY_MAX)
 	{
-		duty = MDR_MAX_DUTY;
+		duty = DUTY_MAX;
 	}
 
 	tgr = (_UINT)(((float)PWM_FREQ / 100.0) * duty);
+
+	if(tgr > PWM_FREQ)	tgr = PWM_FREQ - 1;
 
 	switch(type)
 	{

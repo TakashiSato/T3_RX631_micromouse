@@ -22,10 +22,10 @@
 // ==== スタート座標 ====
 #define START_X	0
 #define START_Y	0
-#define GOAL_X 3
-#define GOAL_Y 3
+#define GOAL_X	11
+#define GOAL_Y 	3
 
-#define ADJUST_NUM 1
+#define ADJUST_NUM 0
 
 
 /*----------------------------------------------------------------------

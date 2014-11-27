@@ -2,14 +2,38 @@
  * @file  SerialPort.c
  * @brief シリアルコミュニケーションインタフェース
  */
-/*----------------------------------------------------------------------
- インクルード
- ----------------------------------------------------------------------*/
-#include "SerialPort.h"
-#include "../iodefine.h"
 
 /*----------------------------------------------------------------------
- パブリックメソッド
+	Includes
+ ----------------------------------------------------------------------*/
+#include "SerialPort.h"
+#include <stdbool.h>
+#include "../iodefine.h"
+#include "../Utils/RingBuffer.h"
+
+/*----------------------------------------------------------------------
+	Private global variables
+ ----------------------------------------------------------------------*/
+static volatile RING_BUFFER* SCI_RxD;			// 受信データ用リングバッファ構造体
+static volatile RING_BUFFER* SCI_TxD;			// 送信データ用リングバッファ構造体
+
+/*----------------------------------------------------------------------
+	Private Method Declarations
+ ----------------------------------------------------------------------*/
+static void SCI_PutChar(_UBYTE c);
+static void SCI_PutStr(_UBYTE *str);
+static void SCI_PutInt(_UBYTE fmt, signed int var, short len);
+static void SCI_PutLong(_UBYTE fmt, signed long var, short len);
+static void SCI_PutFrac(double var, short len, short fracLen);
+static void SCI_ScanStr(_UBYTE* receive);
+static void SCI_ScanInt(int* receive);
+static void SCI_ScanDouble(double* receive);
+static void SCI_ScanFloat(float* receive);
+static bool SCI_GetChar(_UBYTE* buf);
+static void SCI_BufferFlash(void);
+
+/*----------------------------------------------------------------------
+	Public Method Definitions
  ----------------------------------------------------------------------*/
 /** Printf関数
  * @param str : printする文字列

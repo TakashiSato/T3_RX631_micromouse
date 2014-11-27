@@ -28,7 +28,7 @@ RING_BUFFER* NewRingBuffer(_UWORD size)
 {
 	RING_BUFFER* rb = NULL;
 
-	rb = malloc(sizeof(RING_BUFFER));
+	rb = (RING_BUFFER*)malloc(sizeof(RING_BUFFER));
 	if(rb == NULL)
 	{
 		return NULL;

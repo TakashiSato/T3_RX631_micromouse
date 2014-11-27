@@ -57,6 +57,18 @@ _SWORD MPU6500_GetAngVel(void)
 	return (_SWORD)angv;
 }
 
+void MPU6500_LogMode(void)
+{
+	// MPU6500用
+	//AD128160_Locate(4, 0);
+	while(!GetSwitchState())
+	{
+		Printf("AngVel:%6d\n", MPU6500_GetAngVel());
+		DispLED((_UBYTE)(MPU6500_GetAngVel()/256));
+		WaitMS(100);
+	}
+}
+
 /*----------------------------------------------------------------------
 	Private Method Definitions
  ----------------------------------------------------------------------*/

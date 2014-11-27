@@ -60,13 +60,14 @@ void main(void)
 	Switch_Initialize();
 
 	// スピーカーの初期化
-//	Speaker_Initialize();
+	Speaker_Initialize();
 
 	// シリアル通信環境の初期化
 	if(SERIAL_TARGET_IS_CONSOLE)
 	{
 		// シリアルポートの初期化(115200[bps])
-		SCI_InitializeSerialPort(115200);
+//		SCI_InitializeSerialPort(115200);
+		SCI_InitializeSerialPort(250000);
 	}
 	else
 	{
@@ -85,7 +86,7 @@ void main(void)
 	PlaySound(100);
 
 	// MPU6500の初期化
-//	MPU6500_Initialize();
+	MPU6500_Initialize();
 	DispLED(0x03);
 	PlaySound(100);
 
@@ -100,13 +101,13 @@ void main(void)
 	DispLED(0x0F);
 	PlaySound(100);
 
-	Printf("Start!\n");
+//	Printf("Start!\n");
 	PlaySound(500);
 	PlaySound(300);
 	PlaySound(100);
 
 	// SPIサイクル動作開始
-	RSPI0_StartCycleOperation();
+//	RSPI0_StartCycleOperation();
 
 	// 制御器の初期化
 	MouseController_Initialize();
@@ -136,17 +137,10 @@ void main(void)
 				LightSensor_GetBaseLR();
 				Search_Adachi();
 				break;
-//			case 2:
-//				// MPU6500用
-//				//AD128160_Locate(4, 0);
-//				while(!GetSwitchState())
-//				{
-//					Printf("AngVel:%6d\n", MPU6500_GetAngVel());
-//					DispLED((_UBYTE)(MPU6500_GetAngVel()/256));
-//					WaitMS(100);
-//				}
-//				break;
 			case 3:
+				MPU6500_LogMode();
+				break;
+			case 4:
 				// AS5055用
 				//AD128160_Locate(5, 0);
 				while(!GetSwitchState())
@@ -159,14 +153,14 @@ void main(void)
 					WaitMS(100);
 				}
 				break;
-			case 4:
+			case 5:
 				while(!GetSwitchState())
 				{
 					Printf("Bat:%f\n", Battery_GetValue());
 					WaitMS(100);
 				}
 				break;
-			case 5:
+			case 6:
 				MouseController_CheckValue();
 				break;
 			default:

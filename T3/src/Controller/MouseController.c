@@ -38,7 +38,7 @@ static	volatile _UWORD wordlogR[LOG_SIZE] = {0};
 static	volatile float floatlogL[LOG_SIZE] = {0};
 static	volatile float floatlogR[LOG_SIZE] = {0};
 
-static float kp = -0.05, kd = 0.0;						// 比例,微分制御係数格納変数
+static float kp = -0.01, kd = 0.0;						// 比例,微分制御係数格納変数
 static float _dl, _dr;
 static float _dutyL, _dutyR;
 static float _tarv, _taracc, _tarvmax;
@@ -139,11 +139,11 @@ void MouseController_IntMTU2TGIA(void)
 		_t++;
 		_x += (xL + xR) / 2.0;
 	}
-	else
-	{
-		DRV8836_DriveMotor(MOTOR_TYPE_LEFT, MOTOR_DIR_CCW, 0);
-		DRV8836_DriveMotor(MOTOR_TYPE_RIGHT, MOTOR_DIR_CW, 0);
-	}
+//	else
+//	{
+//		DRV8836_DriveMotor(MOTOR_TYPE_LEFT, MOTOR_DIR_CCW, 0);
+//		DRV8836_DriveMotor(MOTOR_TYPE_RIGHT, MOTOR_DIR_CW, 0);
+//	}
 }
 
 /**
@@ -217,8 +217,8 @@ void MouseControlle_MotorTest(void)
 			SetPosition();
 			break;
 		case 7:
-			DRV8836_DriveMotor(MOTOR_TYPE_LEFT, MOTOR_DIR_CCW, 10);
-			DRV8836_DriveMotor(MOTOR_TYPE_RIGHT, MOTOR_DIR_CW, 10);
+			DRV8836_DriveMotor(MOTOR_TYPE_LEFT, MOTOR_DIR_CCW, 12.0);
+			DRV8836_DriveMotor(MOTOR_TYPE_RIGHT, MOTOR_DIR_CW, 12.0);
 			WaitMS(100);
 			for(int i = 0; i < LOG_SIZE; i++)
 			{
@@ -228,8 +228,8 @@ void MouseControlle_MotorTest(void)
 				floatlogR[i] = _wheelRDist.Now;
 				WaitMS(1);
 			}
-			DRV8836_DriveMotor(MOTOR_TYPE_LEFT, MOTOR_DIR_CCW, 0);
-			DRV8836_DriveMotor(MOTOR_TYPE_RIGHT, MOTOR_DIR_CW, 0);
+			DRV8836_DriveMotor(MOTOR_TYPE_LEFT, MOTOR_DIR_CCW, 0.0);
+			DRV8836_DriveMotor(MOTOR_TYPE_RIGHT, MOTOR_DIR_CW, 0.0);
 
 			Printf("t,AngL,AngR,DistL,DistR\n");
 			for(int i = 0; i < LOG_SIZE; i++)
@@ -240,26 +240,26 @@ void MouseControlle_MotorTest(void)
 			break;
 
 		case 14:
+			DRV8836_DriveMotor(MOTOR_TYPE_LEFT, MOTOR_DIR_CCW, 12.0);
+			DRV8836_DriveMotor(MOTOR_TYPE_RIGHT, MOTOR_DIR_CW, 12.0);
 			while(!GetSwitchState())
 			{
-				DRV8836_DriveMotor(MOTOR_TYPE_LEFT, MOTOR_DIR_CCW, 10);
-				DRV8836_DriveMotor(MOTOR_TYPE_RIGHT, MOTOR_DIR_CW, 10);
 				Printf("vel:%f, angvel:%f\n", MouseController_GetVel(),	MouseController_GetAngvel());
 				WaitMS(100);
 			}
-			DRV8836_DriveMotor(MOTOR_TYPE_LEFT, MOTOR_DIR_CCW, 0);
-			DRV8836_DriveMotor(MOTOR_TYPE_RIGHT, MOTOR_DIR_CW, 0);
+			DRV8836_DriveMotor(MOTOR_TYPE_LEFT, MOTOR_DIR_CCW, 0.0);
+			DRV8836_DriveMotor(MOTOR_TYPE_RIGHT, MOTOR_DIR_CW, 0.0);
 			break;
 		case 15:
+			DRV8836_DriveMotor(MOTOR_TYPE_LEFT, MOTOR_DIR_CW, 12.0);
+			DRV8836_DriveMotor(MOTOR_TYPE_RIGHT, MOTOR_DIR_CW, 12.0);
 			while(!GetSwitchState())
 			{
-				DRV8836_DriveMotor(MOTOR_TYPE_LEFT, MOTOR_DIR_CW, 10);
-				DRV8836_DriveMotor(MOTOR_TYPE_RIGHT, MOTOR_DIR_CW, 10);
 				Printf("vel:%f, angvel:%f\n", MouseController_GetVel(),	MouseController_GetAngvel());
 				WaitMS(100);
 			}
-			DRV8836_DriveMotor(MOTOR_TYPE_LEFT, MOTOR_DIR_CW, 0);
-			DRV8836_DriveMotor(MOTOR_TYPE_RIGHT, MOTOR_DIR_CW, 0);
+			DRV8836_DriveMotor(MOTOR_TYPE_LEFT, MOTOR_DIR_CCW, 0.0);
+			DRV8836_DriveMotor(MOTOR_TYPE_RIGHT, MOTOR_DIR_CW, 0.0);
 			break;
 		default:
 			loopFlag = false;
@@ -279,34 +279,34 @@ void HalfSectionD(void)
 	_MF.CTRL.BIT.SIDE = 1;
 	DriveD(DEF_VMIN, -DEF_ACC, DR_SEC_HALF, true);
 	_MF.CTRL.BIT.SIDE = 0;
-	WaitMS(100);
+	WaitMS(400);
 }
 
 void TurnL90AD(void)
 {
 	TurnA(-DEF_ANGV0, -DEF_ANGVMAX, -DEF_ANGACC, DR_ROT_L90/2);
 	TurnD(-DEF_ANGVMIN, DEF_ANGACC, DR_ROT_L90/2, true);
-	WaitMS(100);
+	WaitMS(400);
 }
 
 void TurnR90AD(void)
 {
 	TurnA(DEF_ANGV0, DEF_ANGVMAX, DEF_ANGACC, DR_ROT_R90/2);
 	TurnD(DEF_ANGVMIN, -DEF_ANGACC, DR_ROT_R90/2, true);
-	WaitMS(100);
+	WaitMS(400);
 }
 
 void TurnL180AD(void)
 {
 	TurnA(-DEF_ANGV0, -DEF_ANGVMAX, -DEF_ANGACC, DR_ROT_L180/2);
 	TurnD(-DEF_ANGVMIN, DEF_ANGACC, DR_ROT_L180/2, true);
-	WaitMS(100);
+	WaitMS(400);
 }
 void TurnR180AD(void)
 {
 	TurnA(DEF_ANGV0, DEF_ANGVMAX, DEF_ANGACC, DR_ROT_R180/2);
 	TurnD(DEF_ANGVMIN, -DEF_ANGACC, DR_ROT_R180/2, true);
-	WaitMS(100);
+	WaitMS(400);
 }
 
 void SetPosition(void)
@@ -605,6 +605,7 @@ static void TurnA(float angv0, float angvmax, float angacc, float dist)
 		// 何かしら処理がないと無限ループに陥るのでウェイトを入れている
 		WaitUS(1);
 	}
+//	Printf("_x:%f\n", _x);
 
 	_driving = false;
 }
@@ -636,6 +637,7 @@ static void TurnD(float angvmin, float angacc, float dist, bool rs)
 		_tarangvmax = 0;
 		_tarangacc = 0;
 	}
+//	Printf("_x:%f\n", _x);
 
 	_driving = false;
 }

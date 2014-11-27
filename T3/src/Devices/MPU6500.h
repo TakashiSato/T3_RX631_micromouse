@@ -111,5 +111,6 @@
  ----------------------------------------------------------------------*/
 void MPU6500_Initialize(void);
 _SWORD MPU6500_GetAngVel(void);
+void MPU6500_LogMode(void);
 
 #endif
